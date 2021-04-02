@@ -1,9 +1,10 @@
 # Distributed Multicast Physarum Polycephalum Algorithm
 
 ## Run Tests
-Requirements: Node.js >= v14.0.0 
+Requirements: 
+* Node.js >= v14.0.0 
 ### Tests on Pre-defined Graphs
-Open node prompt with top-level await in REPL supported:
+Open node prompt with top-level await in REPL enabled:
 ```
 node --experimental-repl-await
 ```

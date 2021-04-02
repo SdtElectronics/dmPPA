@@ -4,9 +4,10 @@
 * * * * * * * * * * * * * * * All rights reserved * * * * * * * * * * * * * */
 
 export class packet{
-    constructor(src, dest, weigh){
+    constructor(src, dest, weigh, hopComp){
         this.src = src;
         this.dest = dest;
         this.weigh = weigh;
+        this.hopComp = hopComp;
     }
 }
