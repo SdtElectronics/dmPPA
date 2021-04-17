@@ -65,7 +65,7 @@ export const testGraph5 = [
 ];
 
 export const runTest = graph => {
-    const dmPPA = new dmPPArevd(dmPPAimpl.preEdge(graph));
+    const dmPPA = new dmPPAmimc(dmPPAimpl.preEdge(graph));
     dmPPA.init();
     dmPPA.loop();
     //dmPPA.deplete();

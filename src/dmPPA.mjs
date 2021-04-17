@@ -353,19 +353,25 @@ export class dmPPAwfun extends dmPPAbase{
 export class dmPPAmimc extends dmPPAbase{
     //edges         : Graph matrix of edge lengths
     //C4Pcoefficient: Conductivity update rate according to packets
+    //F4Pcoefficient: Flux update rate according to packets
     //C4Ecoefficient: Conductivity update rate according to edge lengths
     //dropThreshold : Minimum weigh for a packet to be forwarded
     constructor(edges, 
-        C4Pcoefficient = 0.05, 
+        C4Pcoefficient = 0.5, 
+        F4Pcoefficient = 0.5,
         C4Ecoefficient = 0.01, 
         dropThreshold = 10E-5,
         hopCompensate = 3){    
         super(edges);
         this.C4Pcoef = C4Pcoefficient;
+        this.F4Pcoef = F4Pcoefficient;
         this.C4Ecoef = C4Ecoefficient;
         this.dThresh = dropThreshold;
         this.hopComp = hopCompensate;
         this.workMat = Array.from({length: this.edgeMat.length},
+            () => new Array(this.edgeMat.length).fill(0)
+        );
+        this.fluxMat = Array.from({length: this.edgeMat.length},
             () => new Array(this.edgeMat.length).fill(0)
         );
     }
@@ -397,9 +403,11 @@ export class dmPPAmimc extends dmPPAbase{
         const uniqFlux = Object.values(tempFlux.reduce((p,c) => (p[JSON.stringify(c)] = c,p),{}));
 
         uniqFlux.forEach(flux => {
-            const conductivity = this.condMat[flux[1]][flux[0]] * (1 - this.C4Pcoef) 
-                + this.workMat[flux[0]][flux[1]] * this.C4Pcoef;
+            this.fluxMat[flux[1]][flux[0]] = this.fluxMat[flux[1]][flux[0]] * (1 - this.F4Pcoef) 
+                + this.workMat[flux[0]][flux[1]] * this.F4Pcoef;
             
+            const conductivity = this.condMat[flux[0]][flux[1]] * (1 - this.C4Ecoef)
+                + Math.abs(this.fluxMat[flux[1]][flux[0]]) * this.C4Ecoef;
             this.condMat[flux[0]][flux[1]] = conductivity;
             this.condMat[flux[1]][flux[0]] = conductivity;
             this.workMat[flux[0]][flux[1]] = 0;
@@ -443,6 +451,6 @@ export class dmPPAmimc extends dmPPAbase{
 
     //Default terminate condition
     endPredicate(times){
-        return times <= 100;
+        return times <= 5000;
     }
 }
