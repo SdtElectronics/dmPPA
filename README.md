@@ -14,7 +14,8 @@ const dmTests = await import("./static.mjs")
 ```
 Run tests:
 ```
-dmTests.runTest(md.testGraph1)
-dmTests.runTest(md.testGraph2)
-dmTests.runTest(md.testGraph3)
+dmTests.runTest(dmTests.testGraph1, 100)
+dmTests.runTest(dmTests.testGraph2)
+dmTests.runTest(dmTests.testGraph3)
 ```
+The second parameter specifies rounds of loop with a default value of 200.

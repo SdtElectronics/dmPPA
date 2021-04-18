@@ -95,7 +95,12 @@ export class dmPPAbase{
         return ret;
     }
 
-    
+    static interpret(str){
+        return str.split("\n")
+                  .map(e => e.split(/\s+/)
+                  .filter(e => e != "")
+                  .map(e => e == "0" ? Infinity : parseInt(e)));
+    }
 }
 
 //class dmPPAimpl extends dmPPAbase{
@@ -357,8 +362,8 @@ export class dmPPAmimc extends dmPPAbase{
     //C4Ecoefficient: Conductivity update rate according to edge lengths
     //dropThreshold : Minimum weigh for a packet to be forwarded
     constructor(edges, 
-        C4Pcoefficient = 0.5, 
-        F4Pcoefficient = 0.5,
+        C4Pcoefficient = 0.2, 
+        F4Pcoefficient = 0.6,
         C4Ecoefficient = 0.01, 
         dropThreshold = 10E-5,
         hopCompensate = 3){    
@@ -451,6 +456,6 @@ export class dmPPAmimc extends dmPPAbase{
 
     //Default terminate condition
     endPredicate(times){
-        return times <= 5000;
+        return times <= 200;
     }
 }

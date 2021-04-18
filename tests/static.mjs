@@ -34,6 +34,7 @@ export const testGraph3 = [
     [0, 0, 0, Infinity]
 ];
 
+//[ 0, 3, 11 ]
 export const testGraph4 = [
     [Infinity,10,10,10,Infinity,Infinity,Infinity,Infinity,Infinity,Infinity,Infinity,Infinity],
     [10,Infinity,Infinity,Infinity,10,10,Infinity,Infinity,Infinity,Infinity,Infinity,Infinity],
@@ -64,10 +65,10 @@ export const testGraph5 = [
     [Infinity,Infinity,Infinity,Infinity,Infinity,15,Infinity, 2,Infinity, 3,Infinity]
 ];
 
-export const runTest = graph => {
+export const runTest = (graph, t = 200) => {
     const dmPPA = new dmPPAmimc(dmPPAimpl.preEdge(graph));
     dmPPA.init();
-    dmPPA.loop();
+    dmPPA.loop(times => times <= t);
     //dmPPA.deplete();
     console.log(dmPPA.genPath());
 }
