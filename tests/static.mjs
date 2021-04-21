@@ -3,7 +3,9 @@
 *                           <null@std.uestc.edu.cn>                          *
 * * * * * * * * * * * * * * * All rights reserved * * * * * * * * * * * * * */
 
-import { dmPPAimpl, dmPPArevd, dmPPAwfun, dmPPAmimc } from "../src/dmPPA.mjs"
+import { dmPPAbase } from "../src/dmPPA.mjs";
+import { dmPPAimpl, dmPPArevd, dmPPAwfun, dmPPAmimc, dmPPArepl } from "../src/dmPPA.mjs"
+import { graph } from "../src/graph.mjs";
 
 //[0,2,3,1,4,6]
 export const testGraph1 = [
@@ -65,10 +67,22 @@ export const testGraph5 = [
     [Infinity,Infinity,Infinity,Infinity,Infinity,15,Infinity, 2,Infinity, 3,Infinity]
 ];
 
-export const runTest = (graph, t = 200) => {
-    const dmPPA = new dmPPAmimc(dmPPAimpl.preEdge(graph));
+export const runTest = (mat, t = 200) => {
+    const g = graph.fromMat(mat);
+    g.preEdge().normalize();
+    const dmPPA = new dmPPAmimc(g);
     dmPPA.init();
     dmPPA.loop(times => times <= t);
-    //dmPPA.deplete();
     console.log(dmPPA.genPath());
 }
+
+export const baseline = (mat, t = 200) => {
+    const g = graph.fromMat(mat);
+    g.preEdge().normalize();
+    const dmPPA = new dmPPArepl(g);
+    dmPPA.init();
+    dmPPA.loop(times => times <= t);
+    console.log(dmPPA.genPath());
+}
+
+export const interpret = graph.interpret;
