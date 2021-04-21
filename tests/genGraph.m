@@ -1,4 +1,5 @@
 function [matrix_graph] = genGraph(nodes, edge_max)
+rng('shuffle');
 if nargin > 2
   value_max = edge_max;
 else

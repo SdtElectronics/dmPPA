@@ -1,3 +1,8 @@
+/* * * * * * * * * * * * graph helper class for dmPPA * * * * * * * * * * * * 
+*                          SdtElectronics 2021.4.21                         *
+*                           <null@std.uestc.edu.cn>                         *
+* * * * * * * * * * * * * * * All rights reserved * * * * * * * * * * * * * */
+
 export class graph extends Array{
     /*
     * \..
