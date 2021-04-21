@@ -74,6 +74,7 @@ export const runTest = (mat, t = 200) => {
     dmPPA.init();
     dmPPA.loop(times => times <= t);
     console.log(dmPPA.genPath());
+    console.log("Bellman–Ford", g.bft());
 }
 
 export const baseline = (mat, t = 200) => {

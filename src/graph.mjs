@@ -31,6 +31,14 @@ export class graph extends Array{
         return this;
     }
 
+    //Calculate iterations that Bellman–Ford algorithm costs
+    bft(){
+        const tmp = [...this.mirror()];
+        const E = tmp.flat().filter(e => e != Infinity).length/2;
+        return E * (this.length - 1);
+    }
+
+    //Interpret matlab matrix
     static interpret(str){
         return new graph(...(str.split("\n")
                             .map(e => e.split(/\s+/)
