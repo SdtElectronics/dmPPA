@@ -566,3 +566,105 @@ export class dmPPArepl extends dmPPAbase{
         }
     }
 }
+
+export class dmPPAcomp extends dmPPAbase{
+    //edges         : Graph matrix of edge lengths
+    //C4Pcoefficient: Conductivity update rate according to packets
+    //F4Pcoefficient: Flux update rate according to packets
+    //C4Ecoefficient: Conductivity update rate according to edge lengths
+    //granularity : Minimum weigh for a packet to be decomposited
+    constructor(edges, 
+        C4Pcoefficient = 0.2, 
+        F4Pcoefficient = 0.2,
+        C4Ecoefficient = 0.01, 
+        granularity    = 10E-4,
+        hopCompensate = 3){    
+        super(edges);
+        this.C4Pcoef = C4Pcoefficient;
+        this.F4Pcoef = F4Pcoefficient;
+        this.C4Ecoef = C4Ecoefficient;
+        this.grain   = granularity;
+        this.hopComp = hopCompensate;
+        this.workMat = Array.from({length: this.edgeMat.length},
+            () => new Array(this.edgeMat.length).fill(0)
+        );
+        this.fluxMat = Array.from({length: this.edgeMat.length},
+            () => new Array(this.edgeMat.length).fill(0)
+        );
+    }
+
+    iterate(){
+        //Updates the conductivity according to packets
+        this.updateCond4Pack();
+
+        //Updates the conductivity according to edges
+        this.updateCond4Edge();
+
+        //Send new packets to the network
+        this.packets = this.packets.map(e => 
+            this.updatePacks(e)
+        ).flat();
+        this.packets.push(new packet(0, 0, 1, 1));
+    }
+
+    updateCond4Pack(){
+        const tempFlux = [];
+        this.packets.forEach(pack => {
+            const src = Math.min(pack.src, pack.dest);
+            const dest = Math.max(pack.src, pack.dest);
+            this.workMat[src][dest] += (pack.dest > pack.src ? 1 : -1) * pack.weigh;
+            tempFlux.push([src, dest]);
+        });
+        //Unique array of arrays
+        //See https://stackoverflow.com/a/57564376/10627291
+        const uniqFlux = Object.values(tempFlux.reduce((p,c) => (p[JSON.stringify(c)] = c,p),{}));
+
+        uniqFlux.forEach(flux => {
+            this.fluxMat[flux[1]][flux[0]] = this.fluxMat[flux[1]][flux[0]] * (1 - this.F4Pcoef) 
+                + this.workMat[flux[0]][flux[1]] * this.F4Pcoef;
+            
+            const conductivity = this.condMat[flux[0]][flux[1]] * (1 - this.C4Ecoef)
+                + Math.abs(this.fluxMat[flux[1]][flux[0]]) * this.C4Ecoef;
+            this.condMat[flux[0]][flux[1]] = conductivity;
+            this.condMat[flux[1]][flux[0]] = conductivity;
+            this.workMat[flux[0]][flux[1]] = 0;
+        });
+    }
+
+    updateCond4Edge(){
+        let o = 0;
+        this.edgeMat.forEach((row, i) =>  
+            row.slice(++o).forEach((ele, j) => 
+                this.condMat[i][o+j] *= Math.max(1 - ele * this.C4Ecoef, 0)
+            )
+        );
+        //Calculate upper right half only and mirror
+        dmPPAbase.mirror(this.condMat);
+    }
+
+    updatePacks(pack){
+        //Edge lengths to destination nodes
+        const Ls = Array.from(this.edgeMat[pack.dest]);
+        //Edge conductivities to destination nodes
+        const Ds = this.condMat[pack.dest];
+        //don't forward to itself
+        //Ls[pack.src] = Infinity;
+        Ls[pack.dest] = Infinity;
+        //Edge resistances to destination nodes   
+        const Rs = Ls.map((len, ind) => len/Math.max(10E-5, Math.abs(Ds[ind])));
+        const scale = 1/(Rs.reduce((prev, curr) => prev + 1/curr, 0));
+        if(scale == Infinity)return [];
+        if(pack.weigh <= this.grain){
+            const prob = Rs.map(e => scale / e);
+            return [new packet(pack.dest, dmPPArepl.wRandom(prob), pack.weigh, 1)];
+        }else{
+            const weighScaled = pack.weigh * scale;
+            return Rs.map((len, dest) => new packet(pack.dest, dest, weighScaled/len, 1));
+        }
+    }
+
+    //Default terminate condition
+    endPredicate(times){
+        return times <= 200;
+    }
+}

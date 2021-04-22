@@ -4,7 +4,7 @@
 * * * * * * * * * * * * * * * All rights reserved * * * * * * * * * * * * * */
 
 import { dmPPAbase } from "../src/dmPPA.mjs";
-import { dmPPAimpl, dmPPArevd, dmPPAwfun, dmPPAmimc, dmPPArepl } from "../src/dmPPA.mjs"
+import { dmPPAimpl, dmPPArevd, dmPPAwfun, dmPPAmimc, dmPPArepl, dmPPAcomp } from "../src/dmPPA.mjs"
 import { graph } from "../src/graph.mjs";
 
 //[0,2,3,1,4,6]
@@ -70,7 +70,7 @@ export const testGraph5 = [
 export const runTest = (mat, t = 200) => {
     const g = graph.fromMat(mat);
     g.preEdge().normalize();
-    const dmPPA = new dmPPAmimc(g);
+    const dmPPA = new dmPPAcomp(g);
     dmPPA.init();
     dmPPA.loop(times => times <= t);
     console.log(dmPPA.genPath());
