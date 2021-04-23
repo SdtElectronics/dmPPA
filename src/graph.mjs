@@ -19,8 +19,8 @@ export class graph extends Array{
 
     normalize(){
         const flatten = this.flat().filter(e => e != Infinity);
-        //const scale = Math.max(...flatten) - Math.min(...flatten);
-        const scale = Math.max(...flatten);
+        const scale = Math.max(...flatten) - Math.min(...flatten);
+        //const scale = Math.max(...flatten);
         this.forEach((row, i) => row.forEach((e, j) => this[i][j] /= scale));
         return this;
     }

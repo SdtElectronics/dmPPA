@@ -287,13 +287,13 @@ export class dmPPAwfun extends dmPPAbase{
     //dropThreshold : Minimum weigh for a packet to be forwarded
     constructor(edges, 
         C4Pcoefficient = 0.1, 
-        C4Ecoefficient = 0.05, 
-        dropThreshold = 10E-5,
+        C4Ecoefficient = 0.01, 
+        granularity    = 60E-4,
         hopCompensate = 3){    
         super(edges);
         this.C4Pcoef = C4Pcoefficient;
         this.C4Ecoef = C4Ecoefficient;
-        this.dThresh = dropThreshold;
+        this.grain = granularity;
         this.hopComp = hopCompensate;
         this.workMat = Array.from({length: this.edgeMat.length},
             () => new Array(this.edgeMat.length).fill(0)
@@ -302,16 +302,17 @@ export class dmPPAwfun extends dmPPAbase{
 
     updateCond4Pack(pack){
         //Forward flux increase conductivity, and vice versa
-        const increment = (pack.dest > pack.src ? 1 : -1) * pack.weigh * pack.hopComp;
-        //const increment = (pack.dest > pack.src ? 1 : -1) * pack.weigh;
+        //const increment = (pack.dest > pack.src ? 1 : -1) * pack.weigh * pack.hopComp;
+        const increment = (pack.dest > pack.src ? 1 : -1) * pack.weigh;
         this.workMat[pack.dest][pack.src] += increment;
         this.workMat[pack.src][pack.dest] -= increment;
         //const packGain = Math.abs(this.workMat[pack.dest][pack.src]);
         //const conductivity = this.condMat[pack.dest][pack.src] * (1 - this.C4Pcoef) + packGain * this.C4Pcoef;
-        const gain = increment * Math.sign(this.workMat[pack.dest][pack.src]);
-        //const conductivity = this.condMat[pack.dest][pack.src] * (1 - this.C4Pcoef) + gain * this.C4Pcoef;
-        this.condMat[pack.dest][pack.src] += gain;
-        this.condMat[pack.src][pack.dest] += gain;
+        //const gain = increment * Math.sign(this.workMat[pack.dest][pack.src]);
+        const conductivity = this.condMat[pack.dest][pack.src] * (1 - this.C4Pcoef) 
+                            + Math.abs(this.workMat[pack.dest][pack.src]) * this.C4Pcoef;
+        this.condMat[pack.dest][pack.src] = conductivity;
+        this.condMat[pack.src][pack.dest] = conductivity;
     }
 
     updateCond4Edge(){
@@ -325,6 +326,29 @@ export class dmPPAwfun extends dmPPAbase{
         dmPPAbase.mirror(this.condMat);
     }
 
+    
+    updatePacks(pack){
+        //Edge lengths to destination nodes
+        const Ls = Array.from(this.edgeMat[pack.dest]);
+        //Edge conductivities to destination nodes
+        const Ds = this.condMat[pack.dest];
+        //don't forward to itself
+        //Ls[pack.src] = Infinity;
+        Ls[pack.dest] = Infinity;
+        //Edge resistances to destination nodes   
+        const Rs = Ls.map((len, ind) => len/Math.max(10E-5, Math.abs(Ds[ind])));
+        const scale = 1/(Rs.reduce((prev, curr) => prev + 1/curr, 0));
+        if(scale == Infinity)return [];
+        if(pack.weigh <= this.grain){
+            const prob = Rs.map(e => scale / e);
+            return [new packet(pack.dest, dmPPArepl.wRandom(prob), pack.weigh, 1)];
+        }else{
+            const weighScaled = pack.weigh * scale;
+            return Rs.map((len, dest) => new packet(pack.dest, dest, weighScaled/len, 1));
+        }
+    }
+    
+    /*
     updatePacks(pack){
         //Edge lengths to destination nodes
         const Ls = Array.from(this.edgeMat[pack.dest]);
@@ -339,16 +363,16 @@ export class dmPPAwfun extends dmPPAbase{
         const weighScaled = pack.weigh * scale;
         //console.log(Ls);
         //console.log(Ds);
-        const newCompRate = pack.hopComp * this.hopComp;
+        //const newCompRate = pack.hopComp * this.hopComp;
         //const newCompRate = scale;
         //Redistribute weighs inverse proportional to edge resistances
         return Rs.map((len, dest) => 
-            new packet(pack.dest, dest, weighScaled/len, newCompRate)
+            new packet(pack.dest, dest, weighScaled/len, 1)
         ).filter(pack => 
-            pack.weigh > this.dThresh);
+            pack.weigh > this.grain);
         //Drop packets with weigh below dropThreshold
     }
-
+    */
     //Default terminate condition
     endPredicate(times){
         return times <= 300;
@@ -577,7 +601,7 @@ export class dmPPAcomp extends dmPPAbase{
         C4Pcoefficient = 0.2, 
         F4Pcoefficient = 0.2,
         C4Ecoefficient = 0.01, 
-        granularity    = 10E-4,
+        granularity    = 60E-4,
         hopCompensate = 3){    
         super(edges);
         this.C4Pcoef = C4Pcoefficient;
