@@ -16,9 +16,12 @@ export class dmPPAbase{
         this.packets = [new packet(0, 0, 1, 1)];
 
         //Initialize conductivity of all edges to 1
+        /*
         this.condMat = Array.from({length: this.edgeMat.length},
             () => new Array(this.edgeMat.length).fill(1)
         );
+        */
+       this.condMat = this.edgeMat.map(row => row.map(e => e == Infinity ? 0 : 1));
     }
 
     iterate(){
@@ -41,6 +44,8 @@ export class dmPPAbase{
         while(endPredicate(times)){
             this.iterate();
             this.packets.push(new packet(0, 0, 1, 1));
+            //console.log(this.condMat.flat().filter(e => (e != 1) && (e != 0)).length);
+            //console.log(this.condMat)
             ++times;
         }
     }
@@ -601,7 +606,7 @@ export class dmPPAcomp extends dmPPAbase{
         C4Pcoefficient = 0.2, 
         F4Pcoefficient = 0.2,
         C4Ecoefficient = 0.01, 
-        granularity    = 60E-4,
+        granularity    = 10E-4,
         hopCompensate = 3){    
         super(edges);
         this.C4Pcoef = C4Pcoefficient;
@@ -672,7 +677,6 @@ export class dmPPAcomp extends dmPPAbase{
         //Edge conductivities to destination nodes
         const Ds = this.condMat[pack.dest];
         //don't forward to itself
-        //Ls[pack.src] = Infinity;
         Ls[pack.dest] = Infinity;
         //Edge resistances to destination nodes   
         const Rs = Ls.map((len, ind) => len/Math.max(10E-5, Math.abs(Ds[ind])));
@@ -683,7 +687,9 @@ export class dmPPAcomp extends dmPPAbase{
             return [new packet(pack.dest, dmPPArepl.wRandom(prob), pack.weigh, 1)];
         }else{
             const weighScaled = pack.weigh * scale;
-            return Rs.map((len, dest) => new packet(pack.dest, dest, weighScaled/len, 1));
+            return Rs.flatMap((len, dest) => 
+                len == Infinity ? [] : new packet(pack.dest, dest, weighScaled/len, 1)
+            );
         }
     }
 

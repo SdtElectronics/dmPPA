@@ -5,7 +5,7 @@
 
 import { dmPPAbase } from "../src/dmPPA.mjs";
 import { dmPPAimpl, dmPPArevd, dmPPAwfun, dmPPAmimc, dmPPArepl, dmPPAcomp } from "../src/dmPPA.mjs"
-import { graph } from "../src/graph.mjs";
+import { graph } from "../src/graph.mjs"
 
 //[0,2,3,1,4,6]
 export const testGraph1 = [

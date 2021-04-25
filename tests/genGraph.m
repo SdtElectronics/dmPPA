@@ -1,21 +1,25 @@
-function [matrix_graph] = genGraph(nodes, edge_max)
+function [matrix_graph] = genGraph(nodes, conn)
 rng('shuffle');
 if nargin > 2
-  value_max = edge_max;
+  density = conn/nodes;
 else
-  value_max = 50;
+  density = nodes/nodes; % a rough estimate of the amount of edges  
 end
-matrix_graph_tmp=fix(rand(nodes).*value_max)+1;%create a random matrix
-matrix_graph_tmp(nodes,1)=0;  % cancel the edge connecting the starting node and the ending node directly
-matrix_graph_tmp(1,nodes)=0;  % cancel the edge connecting the starting node and the ending node directly
-% If we do not cancel this edge, this edge is highly likely to be the --
-% shortest path, which makes the testing less significant.
-matrix_graph_tmp2=tril(matrix_graph_tmp)+(tril(matrix_graph_tmp))';%Create a symmetric matrix with diagonal elements all 0
-matrix_graph=matrix_graph_tmp2-2.*diag(diag(matrix_graph_tmp));%Create a symmetric matrix with diagonal elements all 0
-% so the "matrix_graph" is the adjacent matrix of the test graph 
-text_graph=graph(matrix_graph); % MATLAB graph for the MATLAB shortestpath function 
+value_max = 50;  
+A = sprand( nodes, nodes, density ); % generate adjacency matrix at random
+% normalize weights to sum to num of edges
+A = tril( A, -1 );    
+%A = spfun( @(x) x./nnz(A), A );    
+% make it symmetric (for undirected graph)
+A = A + A.';
+A(1, nodes) = 0;
+A(nodes, 1) = 0;
+A = A.* value_max;
+A = fix(A);
+matrix_graph = full(A);
+G = graph(A);
 
 %% Call the MATLAB shortestpath function 
-shortestpath(text_graph,1,nodes,'Method','positive')
+shortestpath(G,1,nodes,'Method','positive')
 end
 

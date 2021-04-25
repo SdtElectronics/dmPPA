@@ -4,18 +4,22 @@
 Requirements: 
 * Node.js >= v14.0.0 
 ### Tests on Pre-defined Graphs
-Open node prompt with top-level await in REPL enabled:
+Open node prompt in `test/` directory with top-level await in REPL enabled:
 ```
 node --experimental-repl-await
 ```
 Import tests:
 ```
-const dmTests = await import("./static.mjs")
+const dmTests = await import("./stochastic.mjs");
 ```
+Randomly generate a graph:
+```
+let g = dmTests.randGraph(20, 6);
+```
+where the first parameter specifies the nodes in the graph and the second specifies maximum adjacent nodes connected to a node.
+
 Run tests:
 ```
-dmTests.runTest(dmTests.testGraph1, 100)
-dmTests.runTest(dmTests.testGraph2)
-dmTests.runTest(dmTests.testGraph3)
+dmTests.autoTest(g, 20)
 ```
-The second parameter specifies rounds of loop with a default value of 200.
+Where the second parameter specifies rounds of loop to check the validity of generated path.
